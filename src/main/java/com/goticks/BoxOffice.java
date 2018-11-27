@@ -164,6 +164,7 @@ public class BoxOffice extends AbstractActor {
     child.forward(new TicketSeller.Buy(tickets), getContext());
   }
 
+  @SuppressWarnings("unchecked")
   private CompletionStage<Events> getEvents() {
     List<CompletableFuture<Optional<Event>>> children = new ArrayList<>();
     for (ActorRef child : getContext().getChildren()) {

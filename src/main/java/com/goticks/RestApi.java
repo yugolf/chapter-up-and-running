@@ -38,10 +38,12 @@ public class RestApi extends AllDirectives {
     return ask(boxOfficeActor, new GetEvents(), timeout).thenApply((Events.class::cast));
   }
 
+  @SuppressWarnings("unchecked")
   private CompletionStage<Optional<Event>> getEvent(String name) {
     return ask(boxOfficeActor, new GetEvent(name), timeout).thenApply(e -> (Optional<Event>) e);
   }
 
+  @SuppressWarnings("unchecked")
   private CompletionStage<Optional<Event>> cancelEvent(String name) {
     return ask(boxOfficeActor, new CancelEvent(name), timeout).thenApply(e -> (Optional<Event>) e);
   }
