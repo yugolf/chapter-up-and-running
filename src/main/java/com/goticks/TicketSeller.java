@@ -3,6 +3,7 @@ package com.goticks;
 import akka.actor.*;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
+import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,14 +12,14 @@ import java.util.stream.Collectors;
 
 // アクタークラスの定義
 public class TicketSeller extends AbstractActor {
-  private LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
+  private final LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
 
   // propsの定義
-  static Props props(String event) {
+  static public Props props(String event) {
     return Props.create(TicketSeller.class, () -> new TicketSeller(event));
   }
 
-  private String event;
+  private final String event;
 
   // コンストラクタ
   public TicketSeller(String event) {
@@ -26,11 +27,17 @@ public class TicketSeller extends AbstractActor {
   }
 
   // メッセージプロトコルの定義
+  // ------------------------------------------>
   static public class Add {
     public final List<Ticket> tickets;
 
     public Add(List<Ticket> tickets) {
       this.tickets = tickets;
+    }
+
+    @Override
+    public String toString() {
+      return  ReflectionToStringBuilder.toString(this);
     }
   }
 
@@ -39,6 +46,11 @@ public class TicketSeller extends AbstractActor {
 
     public Ticket(int id) {
       this.id = id;
+    }
+
+    @Override
+    public String toString() {
+      return  ReflectionToStringBuilder.toString(this);
     }
   }
 
@@ -53,7 +65,12 @@ public class TicketSeller extends AbstractActor {
 
     public Tickets(String event) {
       this.event = event;
-      this.entries = new ArrayList<Ticket>();
+      this.entries = new ArrayList<>();
+    }
+
+    @Override
+    public String toString() {
+      return  ReflectionToStringBuilder.toString(this);
     }
   }
 
@@ -63,6 +80,11 @@ public class TicketSeller extends AbstractActor {
     public Buy(int tickets) {
       this.tickets = tickets;
     }
+
+    @Override
+    public String toString() {
+      return  ReflectionToStringBuilder.toString(this);
+    }
   }
 
   static public class GetEvent {
@@ -70,19 +92,19 @@ public class TicketSeller extends AbstractActor {
 
   static public class Cancel {
   }
+  // <------------------------------------------
 
-
-  List<Ticket> tickets = new ArrayList<>();
+  private List<Ticket> tickets = new ArrayList<>();
 
   // receiveメソッドの定義
   @Override
   public Receive createReceive() {
     return receiveBuilder()
         .match(Add.class, add -> {
-          log.info("Received Add message: ");
+          log.debug("Received Add message:{}", add);
           tickets.addAll(add.tickets);
         }).match(Buy.class, buy -> {
-          log.info("Received Buy message: ");
+          log.debug("Received Buy message: {}", buy);
           List<Ticket> entries = tickets
               .stream()
               .limit(buy.tickets)
@@ -94,10 +116,10 @@ public class TicketSeller extends AbstractActor {
             getContext().sender().tell(new Tickets(event), getSelf());
           }
         }).match(GetEvent.class, getEvent -> {
-          log.info("Received GetEvent message: ");
+          log.debug("Received GetEvent message: {}", getEvent);
           sender().tell(Optional.of(new BoxOffice.Event(event, tickets.size())), self());
         }).match(Cancel.class, getCancel -> {
-          log.info("Received Cancel message: ");
+          log.debug("Received Cancel message: {}", getCancel);
           sender().tell(Optional.of(new BoxOffice.Event(event, tickets.size())), self());
           self().tell(PoisonPill.getInstance(), self());
         }).build();
