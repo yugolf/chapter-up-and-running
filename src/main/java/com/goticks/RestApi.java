@@ -21,17 +21,15 @@ import static akka.pattern.PatternsCS.ask;
 
 
 public class RestApi extends AllDirectives {
-  private final ActorSystem system;
   private final Long timeout;
   private final LoggingAdapter log;
   private final ActorRef boxOfficeActor;
 
   // コンストラクタ
   RestApi(ActorSystem system, Long timeout) {
-    this.system = system;
     this.timeout = timeout;
     log = Logging.getLogger(system, this);
-    boxOfficeActor =     system.actorOf(BoxOffice.props(timeout), "boxOfficeActor");
+    boxOfficeActor = system.actorOf(BoxOffice.props(timeout), "boxOfficeActor");
   }
 
   private CompletionStage<Events> getEvents() {
@@ -40,12 +38,12 @@ public class RestApi extends AllDirectives {
 
   @SuppressWarnings("unchecked")
   private CompletionStage<Optional<Event>> getEvent(String name) {
-    return ask(boxOfficeActor, new GetEvent(name), timeout).thenApply(e -> (Optional<Event>) e);
+    return ask(boxOfficeActor, new GetEvent(name), timeout).thenApply(obj -> (Optional<Event>) obj);
   }
 
   @SuppressWarnings("unchecked")
   private CompletionStage<Optional<Event>> cancelEvent(String name) {
-    return ask(boxOfficeActor, new CancelEvent(name), timeout).thenApply(e -> (Optional<Event>) e);
+    return ask(boxOfficeActor, new CancelEvent(name), timeout).thenApply(obj -> (Optional<Event>) obj);
   }
 
   private CompletionStage<EventResponse> createEvent(String name, int nrOfTickets) {
@@ -62,6 +60,7 @@ public class RestApi extends AllDirectives {
             // [Get all events] GET /events
             get(() -> pathEndOrSingleSlash(() -> {
               log.debug("receive request: GET /events");
+
               final CompletionStage<Events> events = getEvents();
               return completeOKWithFuture(events, Jackson.marshaller());
             })),
@@ -69,21 +68,26 @@ public class RestApi extends AllDirectives {
             get(() -> pathPrefix(segment(), (String name) ->
                 pathEndOrSingleSlash(() -> {
                   log.debug("receive request: GET /events/{}", name);
+
                   CompletionStage<Optional<Event>> futureEvent = getEvent(name);
-                  return onSuccess(() -> futureEvent, maybeEvent ->
-                      maybeEvent.map(event -> completeOK(event, Jackson.marshaller()))
-                          .orElse(complete(StatusCodes.NOT_FOUND, "Not Found"))
+                  return onSuccess(() -> futureEvent, maybeEvent -> {
+                        if (maybeEvent.isPresent())
+                          return completeOK(maybeEvent.get(), Jackson.marshaller());
+                        else
+                          return complete(StatusCodes.NOT_FOUND);
+                      }
                   );
                 }))),
             // [Create an event] POST /events/:event tickets:=10
             post(() -> pathPrefix(segment(), (String name) ->
                 pathEndOrSingleSlash(() ->
-                    entity(Jackson.unmarshaller(EventDescription.class), ev -> {
-                      log.debug("receive request: POST /events/{} tickets:={}", name, ev.tickets);
-                      CompletionStage<EventResponse> futureEventResponse = createEvent(name, ev.tickets);
+                    entity(Jackson.unmarshaller(EventDescription.class), event -> {
+                      log.debug("receive request: POST /events/{} tickets:={}", name, event.tickets);
+
+                      CompletionStage<EventResponse> futureEventResponse = createEvent(name, event.tickets);
                       return onSuccess(() -> futureEventResponse, maybeEventResponse -> {
                             if (maybeEventResponse instanceof EventCreated) {
-                              return complete(StatusCodes.CREATED, ((EventCreated) maybeEventResponse).event, Jackson.marshaller());
+                              return complete(StatusCodes.CREATED, ((EventCreated) maybeEventResponse).getEvent(), Jackson.marshaller());
                             } else {
                               Error err = new Error(name + " exists already.");
                               return complete(StatusCodes.BAD_REQUEST, err, Jackson.marshaller());
@@ -97,13 +101,14 @@ public class RestApi extends AllDirectives {
                 pathEndOrSingleSlash(() ->
                     entity(Jackson.unmarshaller(TicketRequest.class), request -> {
                       log.debug("receive request: POST /events/{}/tickets", event);
+
                       CompletionStage<TicketSeller.Tickets> futureTickets = requestTickets(event, request.tickets);
                       return onSuccess(() -> futureTickets, maybeTickets -> {
-                            if (maybeTickets.entries.isEmpty()) {
-                              return complete(StatusCodes.NOT_FOUND, "Not Found");
-                            } else {
+                          System.out.println(maybeTickets.getEntries());
+                            if (maybeTickets.getEntries().isEmpty())
+                              return complete(StatusCodes.NOT_FOUND);
+                            else
                               return complete(StatusCodes.CREATED, maybeTickets, Jackson.marshaller());
-                            }
                           }
                       );
                     })
@@ -112,15 +117,20 @@ public class RestApi extends AllDirectives {
             delete(() -> pathPrefix(segment(), (String name) ->
                 pathEndOrSingleSlash(() -> {
                       log.debug("receive request: DELETE /events/{}", name);
+
                       CompletionStage<Optional<Event>> futureEvent = cancelEvent(name);
-                      return onSuccess(() -> futureEvent, maybeEvent ->
-                          maybeEvent.map(event -> completeOK(event, Jackson.marshaller()))
-                              .orElse(complete(StatusCodes.NOT_FOUND, "Not Found"))
+                      return onSuccess(() -> futureEvent, maybeEvent -> {
+                            if (maybeEvent.isPresent())
+                              return completeOK(maybeEvent.get(), Jackson.marshaller());
+                             else
+                              return complete(StatusCodes.NOT_FOUND);
+                          }
                       );
                     }
                 )))
         ))
     );
+
 
   }
 

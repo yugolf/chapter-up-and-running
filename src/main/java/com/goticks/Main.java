@@ -28,6 +28,7 @@ public class Main {
     final int port = config.getInt("http.port");
 
     final ActorSystem system = ActorSystem.create("go-ticks");
+    final LoggingAdapter log = Logging.getLogger(system, Main.class);
 
     final Http http = Http.get(system);
     final ActorMaterializer materializer = ActorMaterializer.create(system);
@@ -37,9 +38,6 @@ public class Main {
     final Flow<HttpRequest, HttpResponse, NotUsed> routeFlow = app.createRoute().flow(system, materializer);
     final CompletionStage<ServerBinding> binding = http.bindAndHandle(routeFlow,
         ConnectHttp.toHost(host, port), materializer); // HTTPサーバーの起動
-
-    final LoggingAdapter log = Logging.getLogger(system, Main.class);
-
 
     log.info("Server online at http://{}:{}/\nPress RETURN to stop...", host, port);
 

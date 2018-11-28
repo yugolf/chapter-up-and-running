@@ -7,145 +7,180 @@ import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.stream.*;
 
 import static akka.pattern.PatternsCS.ask;
 import static akka.pattern.PatternsCS.pipe;
 
 public class BoxOffice extends AbstractActor {
-  private LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
+  private final LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
 
   // propsの定義
-  static public Props props(Long timeout) {
+  public static Props props(Long timeout) {
     return Props.create(BoxOffice.class, () -> new BoxOffice(timeout));
   }
 
-  private Long timeout;
+  private final Long timeout;
 
   // コンストラクタ
-  BoxOffice(Long timeout) {
+  private BoxOffice(Long timeout) {
     this.timeout = timeout;
   }
 
   // メッセージプロトコルの定義
   // ------------------------------------------>
-  static public class CreateEvent {
-    public final String name;
-    public final int tickets;
+  public static class CreateEvent {
+    private final String name;
+    private final int tickets;
 
     public CreateEvent(String name, int tickets) {
       this.name = name;
       this.tickets = tickets;
     }
 
+    public String getName() {
+      return name;
+    }
+
+    public int getTickets() {
+      return tickets;
+    }
+
     @Override
     public String toString() {
       return ReflectionToStringBuilder.toString(this);
     }
   }
 
-  static public class GetEvent {
-    public final String name;
+  public static class GetEvent {
+    private final String name;
 
     public GetEvent(String name) {
       this.name = name;
     }
 
+    public String getName() {
+      return name;
+    }
+
     @Override
     public String toString() {
       return ReflectionToStringBuilder.toString(this);
     }
   }
 
-  static public class GetEvents {
+  public static class GetEvents {
   }
 
-  static public class GetTickets {
-    public final String event;
-    public final int tickets;
+  public static class GetTickets {
+    private final String event;
+    private final int tickets;
 
     public GetTickets(String event, int tickets) {
       this.event = event;
       this.tickets = tickets;
     }
 
+    public String getEvent() {
+      return event;
+    }
+
+    public int getTickets() {
+      return tickets;
+    }
+
     @Override
     public String toString() {
       return ReflectionToStringBuilder.toString(this);
     }
   }
 
-  static public class CancelEvent {
-    public final String name;
+  public static class CancelEvent {
+    private final String name;
 
     public CancelEvent(String name) {
       this.name = name;
     }
 
+    public String getName() {
+      return name;
+    }
+
     @Override
     public String toString() {
       return ReflectionToStringBuilder.toString(this);
     }
   }
 
-  static public class Event {
-    public final String name;
-    public final int tickets;
+  public static class Event {
+    private final String name;
+    private final int tickets;
 
     public Event(String name, int tickets) {
       this.name = name;
       this.tickets = tickets;
     }
 
+    public String getName() {
+      return name;
+    }
+
+    public int getTickets() {
+      return tickets;
+    }
+
     @Override
     public String toString() {
       return ReflectionToStringBuilder.toString(this);
     }
   }
 
-  static public class Events {
-    public final List<Event> events;
+  public static class Events {
+    private final List<Event> events;
 
     public Events(List<Event> events) {
       this.events = events;
     }
 
+    public List<Event> getEvents() {
+      return events;
+    }
+
     @Override
     public String toString() {
       return ReflectionToStringBuilder.toString(this);
     }
   }
 
-  static public abstract class EventResponse {
+  public abstract static class EventResponse {
   }
 
-  static public class EventCreated extends EventResponse {
-    public final Event event;
+  public static class EventCreated extends EventResponse {
+    private final Event event;
 
     public EventCreated(Event event) {
       this.event = event;
     }
 
+    public Event getEvent() {
+      return event;
+    }
+
     @Override
     public String toString() {
       return ReflectionToStringBuilder.toString(this);
     }
   }
 
-  static public class EventExists extends EventResponse {
+  public static class EventExists extends EventResponse {
   }
+  // <------------------------------------------
 
   private ActorRef createTicketSeller(String name) {
     return getContext().actorOf(TicketSeller.props(name), name);
   }
-  // <------------------------------------------
-
 
   private void create(String name, int tickets) {
     ActorRef eventTickets = createTicketSeller(name);
@@ -173,11 +208,11 @@ public class BoxOffice extends AbstractActor {
     }
 
     return CompletableFuture
-        .allOf(children.toArray(new CompletableFuture[children.size()]))
+        .allOf(children.toArray(new CompletableFuture[0]))
         .thenApply(ignored -> {
           List<Event> events = children.stream()
               .map(CompletableFuture::join)
-              .map(optionalEvent -> optionalEvent.get())
+              .map(Optional::get)
               .collect(Collectors.toList());
           return new Events(events);
         });
@@ -189,6 +224,7 @@ public class BoxOffice extends AbstractActor {
     return receiveBuilder()
         .match(CreateEvent.class, createEvent -> {
           log.debug("Received CreateEvent message: {}", createEvent);
+
           Optional<ActorRef> child = getContext().findChild(createEvent.name);
           if (child.isPresent()) {
             getContext().sender().tell(new EventExists(), self());
@@ -197,6 +233,7 @@ public class BoxOffice extends AbstractActor {
           }
         }).match(GetTickets.class, getTickets -> {
           log.debug("Received GetTickets message: {}", getTickets);
+
           Optional<ActorRef> child = getContext().findChild(getTickets.event);
           if (child.isPresent()) {
             buy(getTickets.tickets, child.get());
@@ -205,6 +242,7 @@ public class BoxOffice extends AbstractActor {
           }
         }).match(GetEvent.class, getEvent -> {
           log.debug("Received GetEvent message: {}", getEvent);
+
           Optional<ActorRef> child = getContext().findChild(getEvent.name);
           if (child.isPresent()) {
             child.get().forward(new TicketSeller.GetEvent(), getContext());
@@ -213,9 +251,11 @@ public class BoxOffice extends AbstractActor {
           }
         }).match(GetEvents.class, getEvents -> {
           log.debug("Received GetEvents message: {}", getEvents);
+
           pipe(getEvents(), getContext().dispatcher()).to(sender());
         }).match(CancelEvent.class, cancelEvent -> {
           log.debug("Received CancelEvent message: {}", cancelEvent);
+
           Optional<ActorRef> child = getContext().findChild(cancelEvent.name);
           if (child.isPresent()) {
             child.get().forward(new TicketSeller.Cancel(), getContext());
