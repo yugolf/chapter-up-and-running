@@ -51,7 +51,7 @@ public class Main {
 
   }
 
-  static private Long requestTimeout(Config config) {
+  static protected Long requestTimeout(Config config) {
     String t = config.getString("akka.http.server.request-timeout");
     String timeout = t.replaceAll("s", "000")
         .replaceAll(" ", "");
