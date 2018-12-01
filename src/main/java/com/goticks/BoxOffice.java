@@ -143,17 +143,22 @@ public class BoxOffice extends AbstractActor {
   }
   // <------------------------------------------
 
+  // TODO: 1.2. TicketSellerアクターを生成する
   private ActorRef createTicketSeller(String name) {
-    return getContext().actorOf(TicketSeller.props(name), name);
+    //return getContext().actorOf(TicketSeller.props(name), name);
+    throw new UnsupportedOperationException("TODO: 1.2. が未実装です。");
   }
+
 
   private void create(String name, int tickets) {
     ActorRef eventTickets = createTicketSeller(name);
     List<TicketSeller.Ticket> newTickets = IntStream.rangeClosed(1, tickets)
         .mapToObj(ticketId -> (new TicketSeller.Ticket(ticketId))).collect(Collectors.toList());
 
-    eventTickets.tell(new TicketSeller.Add(newTickets), getSelf());
-    getContext().sender().tell(new EventCreated(new Event(name, tickets)), getSelf());
+    // TODO: 1.5. TicketSellerアクターにAddメッセージを送信する
+    //eventTickets.tell(new TicketSeller.Add(newTickets), getSelf());
+    // TODO: 1.6. 送信元アクターにEventCreatedメッセージを送信する
+    //getContext().sender().tell(new EventCreated(new Event(name, tickets)), getSelf());
   }
 
   private void notFound(String event) {
@@ -161,17 +166,17 @@ public class BoxOffice extends AbstractActor {
   }
 
   private void buy(int tickets, ActorRef child) {
-    child.forward(new TicketSeller.Buy(tickets), getContext());
+    // TODO: 2.3. TicketSellerアクターにBuyメッセージを送信する(返信先はRestApi)
+    //child.forward(new TicketSeller.Buy(tickets), getContext());
   }
 
   @SuppressWarnings("unchecked")
   private CompletionStage<Events> getEvents() {
     List<CompletableFuture<Optional<Event>>> children = new ArrayList<>();
-    for (ActorRef child : getContext().getChildren()) {
-      children.add(ask(getSelf(), new GetEvent(child.path().name()), timeout)
-          .thenApply(event -> (Optional<Event>) event).toCompletableFuture());
-    }
-
+    // TODO: 3.3. 自アクターにGetEventメッセージを送信する(応答あり)
+//    getContext().getChildren().forEach(child ->
+//      children.add(ask(getSelf(), new GetEvent(child.path().name()), timeout)
+//          .thenApply(event -> (Optional<Event>) event).toCompletableFuture()));
     return CompletableFuture
         .allOf(children.toArray(new CompletableFuture[0]))
         .thenApply(ignored -> {
@@ -207,22 +212,27 @@ public class BoxOffice extends AbstractActor {
           log.debug("   Received: {}", getEvent);
 
           Optional<ActorRef> child = getContext().findChild(getEvent.name);
-          if (child.isPresent())
-            child.get().forward(new TicketSeller.GetEvent(), getContext());
-          else
-            getContext().sender().tell(Optional.empty(), getSelf());
+          // TODO: 3.4. TicketSellerアクターにGetEventメッセージを送信する(返信先はRestApi)
+//          if (child.isPresent())
+//            child.get().forward(new TicketSeller.GetEvent(), getContext());
+          // TODO: 3.5. 送信元アクターに空メッセージを送信する
+//          else
+//            getContext().sender().tell(Optional.empty(), getSelf());
         }).match(GetEvents.class, getEvents -> {
           log.debug("   Received: {}", getEvents);
 
-          pipe(getEvents(), getContext().dispatcher()).to(sender());
+          // TODO: 3.6. 送信元アクターに取得したEventsメッセージを返す
+//          pipe(getEvents(), getContext().dispatcher()).to(sender());
         }).match(CancelEvent.class, cancelEvent -> {
           log.debug("   Received: {}", cancelEvent);
 
           Optional<ActorRef> child = getContext().findChild(cancelEvent.name);
-          if (child.isPresent())
-            child.get().forward(new TicketSeller.Cancel(), getContext());
-          else
-            getContext().sender().tell(Optional.empty(), getSelf());
+          // TODO: 4.3. TicketSellerアクターにCancelメッセージを送信する(返信先はRestApi)
+//          if (child.isPresent())
+//            child.get().forward(new TicketSeller.Cancel(), getContext());
+          // TODO: 4.4. 送信元アクターに空メッセージを送信する
+//          else
+//            getContext().sender().tell(Optional.empty(), getSelf());
         }).build();
   }
 }
