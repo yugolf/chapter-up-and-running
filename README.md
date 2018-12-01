@@ -14,6 +14,12 @@ git clone <xxx.git>
 mvn compile exec:exec
 ```
 
+### テスト
+- `chapter-up-and-running` ディレクトリで実行
+```
+mvn test
+```
+
 ### APIエンドポイント
 
 | 機能 | HTTPメソッド | パス | JSON |
