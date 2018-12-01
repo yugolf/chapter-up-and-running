@@ -103,7 +103,8 @@ public class TicketSeller extends AbstractActor {
           log.debug("Received: {}", add);
 
           tickets.addAll(add.tickets);
-        }).match(Buy.class, buy -> {
+        })
+        .match(Buy.class, buy -> {
           log.debug("Received: {}", buy);
 
           List<Ticket> entries = tickets.stream().limit(buy.tickets).collect(Collectors.toList());
@@ -114,15 +115,18 @@ public class TicketSeller extends AbstractActor {
           } else {
             getContext().sender().tell(new Tickets(event), getSelf());
           }
-        }).match(GetEvent.class, getEvent -> {
+        })
+        .match(GetEvent.class, getEvent -> {
           log.debug("Received: {}", getEvent);
 
           sender().tell(Optional.of(new BoxOffice.Event(event, tickets.size())), self());
-        }).match(Cancel.class, getCancel -> {
+        })
+        .match(Cancel.class, getCancel -> {
           log.debug("Received: {}", getCancel);
 
           sender().tell(Optional.of(new BoxOffice.Event(event, tickets.size())), self());
           self().tell(PoisonPill.getInstance(), self());
-        }).build();
+        })
+        .build();
   }
 }

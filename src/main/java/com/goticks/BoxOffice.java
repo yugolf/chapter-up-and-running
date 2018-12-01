@@ -194,7 +194,8 @@ public class BoxOffice extends AbstractActor {
             getContext().sender().tell(new EventExists(), self());
           else
             create(createEvent.name, createEvent.tickets);
-        }).match(GetTickets.class, getTickets -> {
+        })
+        .match(GetTickets.class, getTickets -> {
           log.debug("   Received: {}", getTickets);
 
           Optional<ActorRef> child = getContext().findChild(getTickets.event);
@@ -202,7 +203,8 @@ public class BoxOffice extends AbstractActor {
             buy(getTickets.tickets, child.get());
           else
             notFound(getTickets.event);
-        }).match(GetEvent.class, getEvent -> {
+        })
+        .match(GetEvent.class, getEvent -> {
           log.debug("   Received: {}", getEvent);
 
           Optional<ActorRef> child = getContext().findChild(getEvent.name);
@@ -210,11 +212,13 @@ public class BoxOffice extends AbstractActor {
             child.get().forward(new TicketSeller.GetEvent(), getContext());
           else
             getContext().sender().tell(Optional.empty(), getSelf());
-        }).match(GetEvents.class, getEvents -> {
+        })
+        .match(GetEvents.class, getEvents -> {
           log.debug("   Received: {}", getEvents);
 
           pipe(getEvents(), getContext().dispatcher()).to(sender());
-        }).match(CancelEvent.class, cancelEvent -> {
+        })
+        .match(CancelEvent.class, cancelEvent -> {
           log.debug("   Received: {}", cancelEvent);
 
           Optional<ActorRef> child = getContext().findChild(cancelEvent.name);
@@ -222,6 +226,7 @@ public class BoxOffice extends AbstractActor {
             child.get().forward(new TicketSeller.Cancel(), getContext());
           else
             getContext().sender().tell(Optional.empty(), getSelf());
-        }).build();
+        })
+        .build();
   }
 }
