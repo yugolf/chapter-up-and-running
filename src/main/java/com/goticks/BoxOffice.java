@@ -167,10 +167,9 @@ public class BoxOffice extends AbstractActor {
   @SuppressWarnings("unchecked")
   private CompletionStage<Events> getEvents() {
     List<CompletableFuture<Optional<Event>>> children = new ArrayList<>();
-    for (ActorRef child : getContext().getChildren()) {
+    getContext().getChildren().forEach (child ->
       children.add(ask(getSelf(), new GetEvent(child.path().name()), timeout)
-          .thenApply(event -> (Optional<Event>) event).toCompletableFuture());
-    }
+          .thenApply(event -> (Optional<Event>) event).toCompletableFuture()));
 
     return CompletableFuture
         .allOf(children.toArray(new CompletableFuture[0]))
