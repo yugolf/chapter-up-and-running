@@ -14,7 +14,7 @@ git clone <xxx.git>
 mvn compile exec:exec
 ```
 
-### API
+### APIエンドポイント
 
 | 機能 | HTTPメソッド | パス | JSON |
 | --- | ----- | ---- | --- |
