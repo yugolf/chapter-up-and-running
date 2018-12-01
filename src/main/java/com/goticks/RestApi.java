@@ -19,7 +19,7 @@ import static akka.http.javadsl.server.PathMatchers.segment;
 import static akka.pattern.PatternsCS.ask;
 
 
-public class RestApi extends AllDirectives {
+class RestApi extends AllDirectives {
   private final Long timeout;
   private final LoggingAdapter log;
   private final ActorRef boxOfficeActor;

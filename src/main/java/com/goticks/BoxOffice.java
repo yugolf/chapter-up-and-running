@@ -191,29 +191,26 @@ public class BoxOffice extends AbstractActor {
           log.debug("   Received: {}", createEvent);
 
           Optional<ActorRef> child = getContext().findChild(createEvent.name);
-          if (child.isPresent()) {
+          if (child.isPresent())
             getContext().sender().tell(new EventExists(), self());
-          } else {
+          else
             create(createEvent.name, createEvent.tickets);
-          }
         }).match(GetTickets.class, getTickets -> {
           log.debug("   Received: {}", getTickets);
 
           Optional<ActorRef> child = getContext().findChild(getTickets.event);
-          if (child.isPresent()) {
+          if (child.isPresent())
             buy(getTickets.tickets, child.get());
-          } else {
+          else
             notFound(getTickets.event);
-          }
         }).match(GetEvent.class, getEvent -> {
           log.debug("   Received: {}", getEvent);
 
           Optional<ActorRef> child = getContext().findChild(getEvent.name);
-          if (child.isPresent()) {
+          if (child.isPresent())
             child.get().forward(new TicketSeller.GetEvent(), getContext());
-          } else {
+          else
             getContext().sender().tell(Optional.empty(), getSelf());
-          }
         }).match(GetEvents.class, getEvents -> {
           log.debug("   Received: {}", getEvents);
 
@@ -222,11 +219,10 @@ public class BoxOffice extends AbstractActor {
           log.debug("   Received: {}", cancelEvent);
 
           Optional<ActorRef> child = getContext().findChild(cancelEvent.name);
-          if (child.isPresent()) {
+          if (child.isPresent())
             child.get().forward(new TicketSeller.Cancel(), getContext());
-          } else {
+          else
             getContext().sender().tell(Optional.empty(), getSelf());
-          }
         }).build();
   }
 }
