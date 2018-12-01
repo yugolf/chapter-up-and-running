@@ -200,7 +200,8 @@ public class BoxOffice extends AbstractActor {
             getContext().sender().tell(new EventExists(), self());
           else
             create(createEvent.name, createEvent.tickets);
-        }).match(GetTickets.class, getTickets -> {
+        })
+        .match(GetTickets.class, getTickets -> {
           log.debug("   Received: {}", getTickets);
 
           Optional<ActorRef> child = getContext().findChild(getTickets.event);
@@ -208,7 +209,8 @@ public class BoxOffice extends AbstractActor {
             buy(getTickets.tickets, child.get());
           else
             notFound(getTickets.event);
-        }).match(GetEvent.class, getEvent -> {
+        })
+        .match(GetEvent.class, getEvent -> {
           log.debug("   Received: {}", getEvent);
 
           Optional<ActorRef> child = getContext().findChild(getEvent.name);
@@ -218,12 +220,14 @@ public class BoxOffice extends AbstractActor {
           // TODO: 3.5. 送信元アクターに空メッセージを送信する
 //          else
 //            getContext().sender().tell(Optional.empty(), getSelf());
-        }).match(GetEvents.class, getEvents -> {
+        })
+        .match(GetEvents.class, getEvents -> {
           log.debug("   Received: {}", getEvents);
 
           // TODO: 3.6. 送信元アクターに取得したEventsメッセージを返す
 //          pipe(getEvents(), getContext().dispatcher()).to(sender());
-        }).match(CancelEvent.class, cancelEvent -> {
+        })
+        .match(CancelEvent.class, cancelEvent -> {
           log.debug("   Received: {}", cancelEvent);
 
           Optional<ActorRef> child = getContext().findChild(cancelEvent.name);
@@ -233,6 +237,7 @@ public class BoxOffice extends AbstractActor {
           // TODO: 4.4. 送信元アクターに空メッセージを送信する
 //          else
 //            getContext().sender().tell(Optional.empty(), getSelf());
-        }).build();
+        })
+        .build();
   }
 }

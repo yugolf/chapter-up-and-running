@@ -66,7 +66,6 @@ class RestApi extends AllDirectives {
                     return completeOK(maybeEvent, Jackson.marshaller());
                   }
               );
-
             })),
 
             // [Get an event] GET /events/:name/

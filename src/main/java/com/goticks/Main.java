@@ -42,7 +42,7 @@ public class Main {
 
     log.info("Server online at http://{}:{}/\nPress RETURN to stop...", host, port);
 
-    System.in.read(); // let it run until user presses return
+    System.in.read();
 
     log.info("presses return...");
 
