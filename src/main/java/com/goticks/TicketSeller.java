@@ -5,12 +5,9 @@ import akka.actor.PoisonPill;
 import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.*;
+import java.util.stream.*;
 
 // アクタークラスの定義
 public class TicketSeller extends AbstractActor {
@@ -30,7 +27,7 @@ public class TicketSeller extends AbstractActor {
 
   // メッセージプロトコルの定義
   // ------------------------------------------>
-  public static class Add {
+  public static class Add extends AbstractMessage {
     private final List<Ticket> tickets;
 
     public Add(List<Ticket> tickets) {
@@ -40,14 +37,9 @@ public class TicketSeller extends AbstractActor {
     public List<Ticket> getTickets() {
       return tickets;
     }
-
-    @Override
-    public String toString() {
-      return ReflectionToStringBuilder.toString(this);
-    }
   }
 
-  public static class Ticket {
+  public static class Ticket extends AbstractMessage {
     private final int id;
 
     public Ticket(int id) {
@@ -57,14 +49,9 @@ public class TicketSeller extends AbstractActor {
     public int getId() {
       return id;
     }
-
-    @Override
-    public String toString() {
-      return ReflectionToStringBuilder.toString(this);
-    }
   }
 
-  public static class Tickets {
+  public static class Tickets extends AbstractMessage {
     private final String event;
     private final List<Ticket> entries;
 
@@ -85,14 +72,9 @@ public class TicketSeller extends AbstractActor {
     public List<Ticket> getEntries() {
       return entries;
     }
-
-    @Override
-    public String toString() {
-      return ReflectionToStringBuilder.toString(this);
-    }
   }
 
-  public static class Buy {
+  public static class Buy extends AbstractMessage {
     private final int tickets;
 
     public Buy(int tickets) {
@@ -102,17 +84,12 @@ public class TicketSeller extends AbstractActor {
     public int getTickets() {
       return tickets;
     }
-
-    @Override
-    public String toString() {
-      return ReflectionToStringBuilder.toString(this);
-    }
   }
 
-  public static class GetEvent {
+  public static class GetEvent extends AbstractMessage {
   }
 
-  public static class Cancel {
+  public static class Cancel extends AbstractMessage {
   }
   // <------------------------------------------
 
@@ -123,11 +100,11 @@ public class TicketSeller extends AbstractActor {
   public Receive createReceive() {
     return receiveBuilder()
         .match(Add.class, add -> {
-          log.debug("Received Add message:{}", add);
+          log.debug("Received: {}", add);
 
           tickets.addAll(add.tickets);
         }).match(Buy.class, buy -> {
-          log.debug("Received Buy message: {}", buy);
+          log.debug("Received: {}", buy);
 
           List<Ticket> entries = tickets.stream().limit(buy.tickets).collect(Collectors.toList());
 
@@ -138,11 +115,11 @@ public class TicketSeller extends AbstractActor {
             getContext().sender().tell(new Tickets(event), getSelf());
           }
         }).match(GetEvent.class, getEvent -> {
-          log.debug("Received GetEvent message: {}", getEvent);
+          log.debug("Received: {}", getEvent);
 
           sender().tell(Optional.of(new BoxOffice.Event(event, tickets.size())), self());
         }).match(Cancel.class, getCancel -> {
-          log.debug("Received Cancel message: {}", getCancel);
+          log.debug("Received: {}", getCancel);
 
           sender().tell(Optional.of(new BoxOffice.Event(event, tickets.size())), self());
           self().tell(PoisonPill.getInstance(), self());

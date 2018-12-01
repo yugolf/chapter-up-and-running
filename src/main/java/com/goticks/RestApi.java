@@ -9,9 +9,8 @@ import akka.http.javadsl.marshallers.jackson.Jackson;
 import akka.http.javadsl.model.StatusCodes;
 import akka.http.javadsl.server.AllDirectives;
 import akka.http.javadsl.server.Route;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.goticks.BoxOffice.*;
+import com.goticks.EventMarshalling.*;
 
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
@@ -57,20 +56,27 @@ public class RestApi extends AllDirectives {
   public Route createRoute() {
     return route(
         pathPrefix("events", () -> route(
-            // [Get all events] GET /events
+            // [Get all events] GET /events/
             get(() -> pathEndOrSingleSlash(() -> {
-              log.debug("receive request: GET /events");
+              log.debug("---------- GET /events/ ----------");
 
-              final CompletionStage<Events> events = getEvents();
-              return completeOKWithFuture(events, Jackson.marshaller());
+              CompletionStage<Events> events = getEvents();
+              return onSuccess(() -> events, maybeEvent -> {
+                    log.debug("Response: {}", maybeEvent);
+                    return completeOK(maybeEvent, Jackson.marshaller());
+                  }
+              );
+
             })),
-            // [Get an event] GET /events/:event
+
+            // [Get an event] GET /events/:name/
             get(() -> pathPrefix(segment(), (String name) ->
                 pathEndOrSingleSlash(() -> {
-                  log.debug("receive request: GET /events/{}", name);
+                  log.debug("---------- GET /events/{}/ ----------", name);
 
                   CompletionStage<Optional<Event>> futureEvent = getEvent(name);
                   return onSuccess(() -> futureEvent, maybeEvent -> {
+                        log.debug("Response: {}", maybeEvent);
                         if (maybeEvent.isPresent())
                           return completeOK(maybeEvent.get(), Jackson.marshaller());
                         else
@@ -78,33 +84,39 @@ public class RestApi extends AllDirectives {
                       }
                   );
                 }))),
-            // [Create an event] POST /events/:event tickets:=10
+
+            // [Create an event] POST /events/:name/ tickets:=:tickets
             post(() -> pathPrefix(segment(), (String name) ->
                 pathEndOrSingleSlash(() ->
                     entity(Jackson.unmarshaller(EventDescription.class), event -> {
-                      log.debug("receive request: POST /events/{} tickets:={}", name, event.tickets);
+                      log.debug("---------- POST /events/{}/ tickets:={} ----------", name, event.getTickets());
 
-                      CompletionStage<EventResponse> futureEventResponse = createEvent(name, event.tickets);
+                      CompletionStage<EventResponse> futureEventResponse = createEvent(name, event.getTickets());
                       return onSuccess(() -> futureEventResponse, maybeEventResponse -> {
+                            log.debug("Response: {}", maybeEventResponse);
+
                             if (maybeEventResponse instanceof EventCreated) {
-                              return complete(StatusCodes.CREATED, ((EventCreated) maybeEventResponse).getEvent(), Jackson.marshaller());
+                              Event maybeEvent = ((EventCreated) maybeEventResponse).getEvent();
+                              return complete(StatusCodes.CREATED, maybeEvent, Jackson.marshaller());
                             } else {
-                              Error err = new Error(name + " exists already.");
+                              EventError err = new EventError(name + " exists already.");
                               return complete(StatusCodes.BAD_REQUEST, err, Jackson.marshaller());
                             }
                           }
                       );
                     })
                 ))),
-            // [Buy tickets] POST /events/:event/tickets
+
+            // [Buy tickets] POST /events/:event/tickets/ tickets:=:request
             post(() -> pathPrefix(segment().slash(segment("tickets")), (String event) ->
                 pathEndOrSingleSlash(() ->
                     entity(Jackson.unmarshaller(TicketRequest.class), request -> {
-                      log.debug("receive request: POST /events/{}/tickets", event);
+                      log.debug("---------- POST /events/{}/tickets/ tickets:={} ----------", event, request.getTickets());
 
-                      CompletionStage<TicketSeller.Tickets> futureTickets = requestTickets(event, request.tickets);
+                      CompletionStage<TicketSeller.Tickets> futureTickets = requestTickets(event, request.getTickets());
                       return onSuccess(() -> futureTickets, maybeTickets -> {
-                          System.out.println(maybeTickets.getEntries());
+                            log.debug("Response: {}", maybeTickets);
+
                             if (maybeTickets.getEntries().isEmpty())
                               return complete(StatusCodes.NOT_FOUND);
                             else
@@ -113,16 +125,19 @@ public class RestApi extends AllDirectives {
                       );
                     })
                 ))),
-            // [Cancel an event] DELETE /events/:event
+
+            // [Cancel an event] DELETE /events/:name/
             delete(() -> pathPrefix(segment(), (String name) ->
                 pathEndOrSingleSlash(() -> {
-                      log.debug("receive request: DELETE /events/{}", name);
+                      log.debug("---------- DELETE /events/{}/ ----------", name);
 
                       CompletionStage<Optional<Event>> futureEvent = cancelEvent(name);
                       return onSuccess(() -> futureEvent, maybeEvent -> {
+                            log.debug("Response: {}", maybeEvent);
+
                             if (maybeEvent.isPresent())
                               return completeOK(maybeEvent.get(), Jackson.marshaller());
-                             else
+                            else
                               return complete(StatusCodes.NOT_FOUND);
                           }
                       );
@@ -134,42 +149,4 @@ public class RestApi extends AllDirectives {
 
   }
 
-  private static class EventDescription {
-    final int tickets;
-
-    @JsonCreator
-    EventDescription(@JsonProperty("tickets") int tickets) {
-      this.tickets = tickets;
-    }
-
-    public int getTickets() {
-      return tickets;
-    }
-  }
-
-  private static class TicketRequest {
-    final int tickets;
-
-    @JsonCreator
-    TicketRequest(@JsonProperty("tickets") int tickets) {
-      this.tickets = tickets;
-    }
-
-    public int getTickets() {
-      return tickets;
-    }
-  }
-
-  private static class Error {
-    final String message;
-
-    @JsonCreator
-    Error(@JsonProperty("message") String message) {
-      this.message = message;
-    }
-
-    public String getMessage() {
-      return message;
-    }
-  }
 }
