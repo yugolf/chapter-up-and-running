@@ -39,7 +39,8 @@ public class Main {
     final CompletionStage<ServerBinding> binding = http.bindAndHandle(routeFlow,
         ConnectHttp.toHost(host, port), materializer); // HTTPサーバーの起動
 
-    log.info("Server online at http://{}:{}/\nPress RETURN to stop...", host, port);
+    log.info("Server online at http://{}:{}", host, port);
+    log.info("Press RETURN to stop...");
 
     System.in.read(); // let it run until user presses return
 

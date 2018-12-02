@@ -15,6 +15,7 @@ import static akka.pattern.PatternsCS.pipe;
 
 public class BoxOffice extends AbstractActor {
   private final LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
+  private final String msg = "  📩  {}";
 
   // propsの定義
   public static Props props(Long timeout) {
@@ -63,7 +64,7 @@ public class BoxOffice extends AbstractActor {
   public static class GetEvents extends AbstractMessage {
   }
 
-  public static class GetTickets {
+  public static class GetTickets extends AbstractMessage {
     private final String event;
     private final int tickets;
 
@@ -116,7 +117,7 @@ public class BoxOffice extends AbstractActor {
     private final List<Event> events;
 
     public Events(List<Event> events) {
-      this.events = events;
+      this.events = Collections.unmodifiableList(events);
     }
 
     public List<Event> getEvents() {
@@ -187,7 +188,7 @@ public class BoxOffice extends AbstractActor {
 
     return receiveBuilder()
         .match(CreateEvent.class, createEvent -> {
-          log.debug("   Received: {}", createEvent);
+          log.debug(msg, createEvent);
 
           Optional<ActorRef> child = getContext().findChild(createEvent.name);
           if (child.isPresent())
@@ -196,7 +197,7 @@ public class BoxOffice extends AbstractActor {
             create(createEvent.name, createEvent.tickets);
         })
         .match(GetTickets.class, getTickets -> {
-          log.debug("   Received: {}", getTickets);
+          log.debug(msg, getTickets);
 
           Optional<ActorRef> child = getContext().findChild(getTickets.event);
           if (child.isPresent())
@@ -205,7 +206,7 @@ public class BoxOffice extends AbstractActor {
             notFound(getTickets.event);
         })
         .match(GetEvent.class, getEvent -> {
-          log.debug("   Received: {}", getEvent);
+          log.debug(msg, getEvent);
 
           Optional<ActorRef> child = getContext().findChild(getEvent.name);
           if (child.isPresent())
@@ -214,12 +215,12 @@ public class BoxOffice extends AbstractActor {
             getContext().sender().tell(Optional.empty(), getSelf());
         })
         .match(GetEvents.class, getEvents -> {
-          log.debug("   Received: {}", getEvents);
+          log.debug(msg, getEvents);
 
           pipe(getEvents(), getContext().dispatcher()).to(sender());
         })
         .match(CancelEvent.class, cancelEvent -> {
-          log.debug("   Received: {}", cancelEvent);
+          log.debug(msg, cancelEvent);
 
           Optional<ActorRef> child = getContext().findChild(cancelEvent.name);
           if (child.isPresent())

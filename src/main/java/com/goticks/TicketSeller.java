@@ -12,6 +12,7 @@ import java.util.stream.*;
 // アクタークラスの定義
 public class TicketSeller extends AbstractActor {
   private final LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
+  private final String msg = "  📩  {}";
 
   // propsの定義
   public static Props props(String event) {
@@ -31,7 +32,7 @@ public class TicketSeller extends AbstractActor {
     private final List<Ticket> tickets;
 
     public Add(List<Ticket> tickets) {
-      this.tickets = tickets;
+      this.tickets = Collections.unmodifiableList(tickets);
     }
 
     public List<Ticket> getTickets() {
@@ -57,7 +58,7 @@ public class TicketSeller extends AbstractActor {
 
     public Tickets(String event, List<Ticket> entries) {
       this.event = event;
-      this.entries = entries;
+      this.entries = Collections.unmodifiableList(entries);
     }
 
     public Tickets(String event) {
@@ -100,29 +101,28 @@ public class TicketSeller extends AbstractActor {
   public Receive createReceive() {
     return receiveBuilder()
         .match(Add.class, add -> {
-          log.debug("Received: {}", add);
+          log.debug(msg, add);
 
-          tickets.addAll(add.tickets);
+          tickets.addAll(add.getTickets());
         })
         .match(Buy.class, buy -> {
-          log.debug("Received: {}", buy);
+          log.debug(msg, buy);
 
-          List<Ticket> entries = tickets.stream().limit(buy.tickets).collect(Collectors.toList());
-
-          if (entries.size() >= buy.tickets) {
-            getContext().sender().tell(new Tickets(event, entries), getSelf());
-            tickets.subList(0, buy.tickets).clear();
+          if (tickets.size() >= buy.tickets) {
+            List<Ticket> entries = tickets.subList(0, buy.getTickets());
+            getContext().sender().tell(new Tickets(event, new ArrayList<>(entries)), getSelf());
+            entries.clear();
           } else {
             getContext().sender().tell(new Tickets(event), getSelf());
           }
         })
         .match(GetEvent.class, getEvent -> {
-          log.debug("Received: {}", getEvent);
+          log.debug(msg, getEvent);
 
           sender().tell(Optional.of(new BoxOffice.Event(event, tickets.size())), self());
         })
         .match(Cancel.class, getCancel -> {
-          log.debug("Received: {}", getCancel);
+          log.debug(msg, getCancel);
 
           sender().tell(Optional.of(new BoxOffice.Event(event, tickets.size())), self());
           self().tell(PoisonPill.getInstance(), self());

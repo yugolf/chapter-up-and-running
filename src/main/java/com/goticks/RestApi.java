@@ -23,6 +23,7 @@ class RestApi extends AllDirectives {
   private final Long timeout;
   private final LoggingAdapter log;
   private final ActorRef boxOfficeActor;
+  private final String msg = "  📩  {}";
 
   // コンストラクタ
   RestApi(ActorSystem system, Long timeout) {
@@ -62,7 +63,7 @@ class RestApi extends AllDirectives {
 
               CompletionStage<Events> events = getEvents();
               return onSuccess(() -> events, maybeEvent -> {
-                    log.debug("Response: {}", maybeEvent);
+                    log.debug(msg, maybeEvent);
                     return completeOK(maybeEvent, Jackson.marshaller());
                   }
               );
@@ -75,7 +76,7 @@ class RestApi extends AllDirectives {
 
                   CompletionStage<Optional<Event>> futureEvent = getEvent(name);
                   return onSuccess(() -> futureEvent, maybeEvent -> {
-                        log.debug("Response: {}", maybeEvent);
+                        log.debug(msg, maybeEvent);
                         if (maybeEvent.isPresent())
                           return completeOK(maybeEvent.get(), Jackson.marshaller());
                         else
@@ -92,7 +93,7 @@ class RestApi extends AllDirectives {
 
                       CompletionStage<EventResponse> futureEventResponse = createEvent(name, event.getTickets());
                       return onSuccess(() -> futureEventResponse, maybeEventResponse -> {
-                            log.debug("Response: {}", maybeEventResponse);
+                            log.debug(msg, maybeEventResponse);
 
                             if (maybeEventResponse instanceof EventCreated) {
                               Event maybeEvent = ((EventCreated) maybeEventResponse).getEvent();
@@ -114,7 +115,7 @@ class RestApi extends AllDirectives {
 
                       CompletionStage<TicketSeller.Tickets> futureTickets = requestTickets(event, request.getTickets());
                       return onSuccess(() -> futureTickets, maybeTickets -> {
-                            log.debug("Response: {}", maybeTickets);
+                            log.debug(msg, maybeTickets);
 
                             if (maybeTickets.getEntries().isEmpty())
                               return complete(StatusCodes.NOT_FOUND);
@@ -132,7 +133,7 @@ class RestApi extends AllDirectives {
 
                       CompletionStage<Optional<Event>> futureEvent = cancelEvent(name);
                       return onSuccess(() -> futureEvent, maybeEvent -> {
-                            log.debug("Response: {}", maybeEvent);
+                            log.debug(msg, maybeEvent);
 
                             if (maybeEvent.isPresent())
                               return completeOK(maybeEvent.get(), Jackson.marshaller());
