@@ -42,13 +42,13 @@ public class Main {
     log.info("Server online at http://{}:{}", host, port);
     log.info("Press RETURN to stop...");
 
-    System.in.read(); // let it run until user presses return
-
-    log.info("presses return...");
-
-    binding
-        .thenCompose(ServerBinding::unbind) // trigger unbinding from the port
-        .thenAccept(unbound -> system.terminate()); // and shutdown when done
+//    System.in.read(); // let it run until user presses return
+//
+//    log.info("presses return...");
+//
+//    binding
+//        .thenCompose(ServerBinding::unbind) // trigger unbinding from the port
+//        .thenAccept(unbound -> system.terminate()); // and shutdown when done
 
   }
 
