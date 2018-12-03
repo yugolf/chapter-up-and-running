@@ -40,6 +40,16 @@ public class Main {
         ConnectHttp.toHost(host, port), materializer); // HTTPサーバーの起動
 
     log.info("Server online at http://{}:{}", host, port);
+    log.info("Press RETURN to stop...");
+
+    System.in.read();
+
+    log.info("presses return...");
+
+    binding
+        .thenCompose(ServerBinding::unbind)
+        .thenAccept(unbound -> system.terminate());
+
 
   }
 

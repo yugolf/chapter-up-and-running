@@ -15,7 +15,7 @@ import static akka.pattern.PatternsCS.pipe;
 
 public class BoxOffice extends AbstractActor {
   private final LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
-  private final String msg = "     📩  {}";
+  private final String msg = "    📩 {}";
 
   // propsの定義
   public static Props props(Long timeout) {
@@ -157,14 +157,6 @@ public class BoxOffice extends AbstractActor {
     getContext().sender().tell(new EventCreated(new Event(name, tickets)), getSelf());
   }
 
-  private void notFound(String event) {
-    getContext().sender().tell(new TicketSeller.Tickets(event), getSelf());
-  }
-
-  private void buy(int tickets, ActorRef child) {
-    child.forward(new TicketSeller.Buy(tickets), getContext());
-  }
-
   @SuppressWarnings("unchecked")
   private CompletionStage<Events> getEvents() {
     List<CompletableFuture<Optional<Event>>> children = new ArrayList<>();
@@ -201,9 +193,9 @@ public class BoxOffice extends AbstractActor {
 
           Optional<ActorRef> child = getContext().findChild(getTickets.event);
           if (child.isPresent())
-            buy(getTickets.tickets, child.get());
+            child.get().forward(new TicketSeller.Buy(getTickets.tickets), getContext());
           else
-            notFound(getTickets.event);
+            getContext().sender().tell(new TicketSeller.Tickets(getTickets.event), getSelf());
         })
         .match(GetEvent.class, getEvent -> {
           log.debug(msg, getEvent);

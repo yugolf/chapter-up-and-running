@@ -23,7 +23,7 @@ class RestApi extends AllDirectives {
   private final Long timeout;
   private final LoggingAdapter log;
   private final ActorRef boxOfficeActor;
-  private final String msg = "       📩  {}";
+  private final String msg = "      📩 {}";
 
   // コンストラクタ
   RestApi(ActorSystem system, Long timeout) {
@@ -89,7 +89,7 @@ class RestApi extends AllDirectives {
             post(() -> pathPrefix(segment(), (String name) ->
                 pathEndOrSingleSlash(() ->
                     entity(Jackson.unmarshaller(EventDescription.class), event -> {
-                      log.debug("---------- POST /events/{}/ tickets:={} ----------", name, event.getTickets());
+                      log.debug("---------- POST /events/{}/ {\"tickets\":{}} ----------", name, event.getTickets());
 
                       CompletionStage<EventResponse> futureEventResponse = createEvent(name, event.getTickets());
                       return onSuccess(() -> futureEventResponse, maybeEventResponse -> {
@@ -111,7 +111,7 @@ class RestApi extends AllDirectives {
             post(() -> pathPrefix(segment().slash(segment("tickets")), (String event) ->
                 pathEndOrSingleSlash(() ->
                     entity(Jackson.unmarshaller(TicketRequest.class), request -> {
-                      log.debug("---------- POST /events/{}/tickets/ tickets:={} ----------", event, request.getTickets());
+                      log.debug("---------- POST /events/{}/tickets/ {\"tickets\":{}} ----------", event, request.getTickets());
 
                       CompletionStage<TicketSeller.Tickets> futureTickets = requestTickets(event, request.getTickets());
                       return onSuccess(() -> futureTickets, maybeTickets -> {

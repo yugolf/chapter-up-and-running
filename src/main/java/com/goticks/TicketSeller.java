@@ -12,7 +12,7 @@ import java.util.stream.*;
 // アクタークラスの定義
 public class TicketSeller extends AbstractActor {
   private final LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
-  private final String msg = "  📩  {}";
+  private final String msg = " 📩 {}";
 
   // propsの定義
   public static Props props(String event) {
