@@ -23,7 +23,7 @@ class RestApi extends AllDirectives {
   private final Long timeout;
   private final LoggingAdapter log;
   private final ActorRef boxOfficeActor;
-  private final String msg = "  📩  {}";
+  private final String msg = "       📩  {}";
 
   // コンストラクタ
   RestApi(ActorSystem system, Long timeout) {

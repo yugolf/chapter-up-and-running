@@ -3,7 +3,7 @@
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <target>System.out</target>
         <encoder>
-            <pattern>%12logger{0}: %msg%n</pattern>
+            <pattern>%logger{0}: %msg%n</pattern>
         </encoder>
     </appender>
 

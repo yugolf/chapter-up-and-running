@@ -15,7 +15,7 @@ import static akka.pattern.PatternsCS.pipe;
 
 public class BoxOffice extends AbstractActor {
   private final LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
-  private final String msg = "  📩  {}";
+  private final String msg = "     📩  {}";
 
   // propsの定義
   public static Props props(Long timeout) {
