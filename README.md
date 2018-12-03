@@ -3,6 +3,10 @@ Akka実践バイブルのサンプルコード
 
 Akka実践バイブル「第2章　最小のAkkaアプリケーション」のJava版サンプルコード
 
+### 必要な環境
+* Java8以上
+* Maven
+
 ### ソースコードの取得
 ```
 git clone <xxx.git>
@@ -24,7 +28,7 @@ mvn test
 
 | 機能 | HTTPメソッド | パス | JSON |
 | --- | ----- | ---- | --- |
-| イベント作成 | POST | /events/<イベント名>/ | {"tickets" :<枚数>} |
+| イベント作成 | POST | /events/<イベント名>/ | {"tickets":<枚数>} |
 | チケット購入 | POST | /events/<イベント名>/tickets/ | {"tickets":<枚数>} |
 | イベント一覧 | GET | /events/ | |
 | イベント取得 | GET | /events/<イベント名>/ |
