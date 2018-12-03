@@ -24,8 +24,8 @@ mvn test
 
 | 機能 | HTTPメソッド | パス | JSON |
 | --- | ----- | ---- | --- |
-| イベント作成 | POST | /events<イベント名>/ | events : <枚数> |
-| チケット購入 | POST | /events/<イベント名>/tickets/ | tickets : <枚数> |
+| イベント作成 | POST | /events/<イベント名>/ | {"tickets" :<枚数>} |
+| チケット購入 | POST | /events/<イベント名>/tickets/ | {"tickets":<枚数>} |
 | イベント一覧 | GET | /events/ | |
 | イベント取得 | GET | /events/<イベント名>/ |
 | イベントキャンセル | DELETE | /events/<イベント名>/ |
